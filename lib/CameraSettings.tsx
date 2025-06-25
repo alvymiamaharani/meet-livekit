@@ -136,9 +136,9 @@ export function CameraSettings() {
             </span>
           </button>
 
-          {BACKGROUND_IMAGES.map((image) => (
+          {BACKGROUND_IMAGES.map((image, idx) => (
             <button
-              key={image.path.src}
+              key={idx}
               onClick={() => selectBackground('image', image.path.src)}
               className="lk-button"
               aria-pressed={
