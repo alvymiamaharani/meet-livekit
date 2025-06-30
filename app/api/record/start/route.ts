@@ -1,4 +1,11 @@
-import { EgressClient, EncodedFileOutput, S3Upload } from 'livekit-server-sdk';
+import {
+  AudioCodec,
+  EgressClient,
+  EncodedFileOutput,
+  EncodingOptions,
+  S3Upload,
+  VideoCodec,
+} from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
@@ -37,6 +44,19 @@ export async function GET(req: NextRequest) {
       return new NextResponse('Meeting is already being recorded', { status: 409 });
     }
 
+    const encodingOptions = new EncodingOptions({
+      width: 640,
+      height: 360,
+      depth: 24,
+      framerate: 10, // Safe minimum, avoid going below 10
+      audioCodec: AudioCodec.OPUS,
+      audioBitrate: 128,
+      audioFrequency: 44100,
+      videoCodec: VideoCodec.H264_MAIN,
+      videoBitrate: 300, // kbps, avoid going below 300
+      keyFrameInterval: 4,
+    });
+
     const fileOutput = new EncodedFileOutput({
       filepath: `${new Date(Date.now()).toISOString()}-${roomName}.mp4`,
       output: {
@@ -57,7 +77,9 @@ export async function GET(req: NextRequest) {
         file: fileOutput,
       },
       {
-        layout: 'speaker',
+        layout: 'grid',
+        // encodingOptions: EncodingOptionsPreset.H264_720P_30,
+        encodingOptions,
       },
     );
 
