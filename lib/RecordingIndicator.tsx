@@ -1,3 +1,5 @@
+'use client';
+
 import { useIsRecording } from '@livekit/components-react';
 import * as React from 'react';
 import toast from 'react-hot-toast';
