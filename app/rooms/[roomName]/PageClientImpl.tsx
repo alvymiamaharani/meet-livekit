@@ -28,6 +28,7 @@ import {
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
+import { useAutoRecord } from '@/hooks/autorecord';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
@@ -82,6 +83,7 @@ export function PageClientImpl(props: {
           connectionDetails={connectionDetails}
           userChoices={preJoinChoices}
           options={{ codec: props.codec, hq: props.hq }}
+          roomName={props.roomName}
         />
       )}
     </main>
@@ -95,6 +97,7 @@ function VideoConferenceComponent(props: {
     hq: boolean;
     codec: VideoCodec;
   };
+  roomName: string;
 }) {
   const keyProvider = new ExternalE2EEKeyProvider();
   const { worker, e2eePassphrase } = useSetupE2EE();
@@ -222,8 +225,14 @@ function VideoConferenceComponent(props: {
           SettingsComponent={SHOW_SETTINGS_MENU ? SettingsMenu : undefined}
         />
         <DebugMode />
+        <AutoRecord roomName={props.roomName} />
         <RecordingIndicator />
       </RoomContext.Provider>
     </div>
   );
 }
+
+const AutoRecord = ({ roomName }: { roomName: string }) => {
+  useAutoRecord(roomName);
+  return null;
+};
