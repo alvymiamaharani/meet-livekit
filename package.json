@@ -18,13 +18,17 @@
     "@livekit/components-styles": "1.1.6",
     "@livekit/krisp-noise-filter": "0.3.0",
     "@livekit/track-processors": "^0.5.4",
+    "@tailwindcss/postcss": "^4.1.11",
     "firebase": "^11.10.0",
     "livekit-client": "2.13.8",
     "livekit-server-sdk": "2.13.1",
+    "lucide-react": "^0.525.0",
     "next": "15.2.4",
+    "postcss": "^8.5.6",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-hot-toast": "^2.5.2",
+    "tailwindcss": "^4.1.11",
     "tinykeys": "^3.0.0"
   },
   "devDependencies": {
