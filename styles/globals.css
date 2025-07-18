@@ -5,8 +5,8 @@
 }
 
 html {
-  color-scheme: dark;
-  background-color: #111;
+  color-scheme: light;
+  background-color: #fff;
 }
 
 html,
@@ -22,48 +22,183 @@ body {
   flex-direction: column;
 }
 
-.header {
-  max-width: 500px;
-  padding-inline: 2rem;
+/* Light theme override */
+.lk-theme-light .lk-prejoin {
+  background-color: #eeeeee !important;
+  color: #111827 !important; /* dark gray text */
+  border-radius: 4px !important;
 }
 
-.header > img {
-  display: block;
-  margin: auto;
-  max-width: 100%;
+.lk-theme-light .lk-button {
+  background-color: #f6f3f3 !important; /* light gray */
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
 }
 
-.header > h2 {
-  font-family: 'TWK Everett', sans-serif;
-  font-style: normal;
-  font-weight: 400;
-  font-size: 1.25rem;
-  line-height: 144%;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.6);
+.lk-theme-light .lk-button:hover {
+  background-color: #e5e7eb !important;
 }
 
-footer {
-  width: 100%;
-  padding: 1.5rem 2rem;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.6);
-  background-color: var(--lk-bg);
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
+.lk-theme-light .lk-username-container input {
+  background-color: #fff !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
 }
 
-footer a,
-h2 a {
-  color: #ff6352;
-  text-decoration-color: #a33529;
-  text-underline-offset: 0.125em;
+.lk-theme-light .lk-device-menu {
+  background-color: #fff !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
 }
 
-footer a:hover,
-h2 a {
-  text-decoration-color: #ff6352;
+.lk-theme-light .lk-list li button {
+  background-color: #fff !important;
+  color: #111827 !important;
 }
 
-h2 a {
-  text-decoration: none;
+.lk-theme-light .lk-list li button:hover {
+  background-color: #f9fafb !important;
+}
+
+/* Override only the Join Room button */
+.lk-theme-light .lk-join-button {
+  background-color: #dc2626 !important; /* Tailwind Red-600 */
+  color: #fff !important;
+  border: 1px solid #b91c1c !important; /* Red-700 */
+}
+
+.lk-theme-light .lk-join-button:hover {
+  background-color: #b91c1c !important;
+  border-color: #7f1d1d !important;
+}
+
+/* ========= */
+/* ========= */
+
+/* CONTROL BAR BASE */
+.lk-theme-lights .lk-control-bar {
+  background-color: #ffffff !important;
+  border-top: 1px solid #e5e7eb;
+  padding: 0.5rem;
+}
+
+/* ALL BUTTONS IN CONTROL BAR */
+.lk-theme-lights .lk-control-bar .lk-button {
+  background-color: #f3f4f6 !important; /* light gray */
+  color: #111827 !important; /* near-black text */
+  border: 1px solid #d1d5db !important; /* gray border */
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.lk-theme-lights .lk-control-bar .lk-button:hover {
+  background-color: #e5e7eb !important;
+}
+
+/* DEVICE MENU (camera/mic options) */
+.lk-theme-lights .lk-device-menu {
+  background-color: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  color: #111827 !important;
+}
+
+/* ACTIVE MENU ITEM */
+.lk-theme-lights .lk-device-menu li[data-lk-active='true'] .lk-button {
+  background-color: #fef3c7 !important; /* warm highlight */
+}
+
+/* DISCONNECT BUTTON (Leave) */
+.lk-theme-lights .lk-control-bar .lk-disconnect-button {
+  background-color: #dc2626 !important; /* red-600 */
+  color: #ffffff !important;
+  border: 1px solid #b91c1c !important;
+}
+
+.lk-theme-lights .lk-control-bar .lk-disconnect-button:hover {
+  background-color: #b91c1c !important;
+}
+
+/* CHAT TOGGLE HIGHLIGHT (if unread messages) */
+.lk-theme-lights
+  .lk-control-bar
+  .lk-chat-toggle[data-lk-unread-msgs]:not([data-lk-unread-msgs='0']) {
+  background-color: #fef2f2 !important; /* light red */
+  border-color: #fecaca !important;
+}
+
+/* LIGHT THEME */
+/* =========== */
+
+/* CHAT CONTAINER */
+.lk-theme-lights .lk-chat {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+/* HEADER BAR */
+.lk-theme-lights .lk-chat-header {
+  background-color: #f3f4f6 !important; /* gray-100 */
+  color: #111827 !important;
+}
+
+/* Base button style for light theme */
+.lk-theme-lights .lk-close-button {
+  background-color: #f3f4f6 !important; /* gray-100 */
+  border: 1px solid #e5e7eb !important; /* gray-200 */
+  border-radius: 0.375rem !important; /* rounded-md */
+  padding: 0.5rem !important;
+}
+
+/* SVG icon default color */
+.lk-theme-lights .lk-close-button svg path {
+  fill: #374151 !important; /* gray-700 */
+}
+
+/* Hover effect */
+.lk-theme-lights .lk-close-button:hover {
+  background-color: #e5e7eb !important; /* gray-200 */
+  border-color: #d1d5db !important; /* gray-300 */
+}
+
+/* Hover icon color */
+.lk-theme-lights .lk-close-button:hover svg path {
+  fill: #1f2937 !important; /* gray-800 */
+}
+
+/* FORCE all self (local) messages to use light mode colors */
+.lk-theme-lights .lk-chat-entry[data-lk-message-origin='local'] .lk-message-body {
+  background-color: #dbeafe !important; /* blue-100 */
+  color: #1f2937 !important; /* gray-800 */
+}
+
+/* REMOTE MESSAGE BUBBLES */
+.lk-theme-lights .lk-chat-entry[data-lk-message-origin='remote'] .lk-message-body {
+  background-color: #f3f4f6 !important; /* gray-100 */
+  color: #1f2937 !important; /* gray-800 */
+}
+
+/* METADATA (name + time) */
+.lk-theme-lights .lk-meta-data {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+/* INPUT FIELD */
+.lk-theme-lights .lk-chat-form-input {
+  background-color: #f9fafb !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+
+/* SEND BUTTON */
+.lk-theme-lights .lk-chat-form-button {
+  background-color: #dc2626 !important; /* red-600 */
+  color: #ffffff !important;
+}
+
+.lk-theme-lights .lk-chat-form-button:hover {
+  background-color: #b91c1c !important; /* red-700 */
+}
+
+.lk-theme-lights .lk-video-conference-inner {
+  background-color: #f9fafb !important;
 }
