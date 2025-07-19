@@ -10,7 +10,6 @@ import {
   VideoPresets,
   type VideoCodec,
 } from 'livekit-client';
-import { DebugMode } from '@/lib/Debug';
 import { useEffect, useMemo, useState } from 'react';
 import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { SettingsMenu } from '@/lib/SettingsMenu';
@@ -86,7 +85,6 @@ export function VideoConferenceClientImpl(props: {
             process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU === 'true' ? SettingsMenu : undefined
           }
         />
-        <DebugMode logLevel={LogLevel.debug} />
       </RoomContext.Provider>
     </div>
   );
