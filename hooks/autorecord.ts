@@ -9,7 +9,6 @@ export function useAutoRecord(roomName: string) {
   const room = useRoomContext();
   const isRecordingRef = useRef(false);
   const params = useParams();
-  console.log({ params });
 
   useEffect(() => {
     if (!room) return;

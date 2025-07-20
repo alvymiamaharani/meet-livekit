@@ -15,8 +15,8 @@ interface Props {
   id: string;
 }
 
-const noFaceAudio = new Howl({ src: ['/noFace.mp3'] });
-const multipleFaceAudio = new Howl({ src: ['/multipleFace.mp3'] });
+const noFaceAudio = new Howl({ src: ['/notifications/noFace.mp3'] });
+const multipleFaceAudio = new Howl({ src: ['/notifications/multipleFace.mp3'] });
 
 export default function FaceDetection({ id }: Props) {
   const router = useRouter();
