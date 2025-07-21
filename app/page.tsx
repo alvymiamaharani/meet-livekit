@@ -38,8 +38,9 @@ export default function Page() {
 
         {/* Subtitle */}
         <p className="text-base md:text-lg text-gray-600 max-w-md mx-auto leading-relaxed">
-          Aplikasi video conference untuk keperluan ujian daring dan presentasi, dikembangkan oleh
-          Tim Alpha Unair dengan teknologi LiveKit dan Next.js.
+          Aplikasi video conference untuk keperluan ujian daring dan presentasi yang dikembangkan
+          oleh <br />
+          Tim Alpha Unair
         </p>
 
         {/* Start Meeting Button */}

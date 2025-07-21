@@ -1,9 +1,14 @@
+import { rtdb } from '@/lib/firebase';
+import { getTodayString } from '@/lib/utils';
 import { useRoomContext } from '@livekit/components-react';
+import { ref, update } from 'firebase/database';
+import { useParams } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
 export function useAutoRecord(roomName: string) {
   const room = useRoomContext();
-  const isRecordingRef = useRef(false); // Hindari trigger ganda
+  const isRecordingRef = useRef(false);
+  const params = useParams();
 
   useEffect(() => {
     if (!room) return;
@@ -12,11 +17,19 @@ export function useAutoRecord(roomName: string) {
       const participantCount = room.numParticipants;
 
       console.log(`[AutoRecord] Checking participants: ${participantCount}`);
+      const today = getTodayString();
+      const roomName = params?.roomName || '';
 
-      if (participantCount === 1 && !isRecordingRef.current) {
+      if (participantCount > 0 && !isRecordingRef.current) {
         try {
           await fetch(`/api/record/start?roomName=${roomName}`);
           isRecordingRef.current = true;
+
+          const path = `test-monitoring/${today}-${roomName}`;
+          update(ref(rtdb, path), {
+            isJoined: true,
+          });
+
           console.log('[AutoRecord] Recording started');
         } catch (err) {
           console.error('[AutoRecord] Failed to start recording:', err);
