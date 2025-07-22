@@ -28,6 +28,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
 import { useAutoRecord } from '@/hooks/autorecord';
+import VideoPopup from '@/components/VideoPopup';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
@@ -228,6 +229,8 @@ function VideoConferenceComponent(props: {
         />
         <AutoRecord roomName={props.roomName} />
         <RecordingIndicator />
+
+        <VideoPopup roomName={props.roomName} />
       </RoomContext.Provider>
     </div>
   );
