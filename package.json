@@ -34,7 +34,8 @@
     "react-toastify": "^11.0.5",
     "react-webcam": "^7.2.0",
     "tailwindcss": "^4.1.11",
-    "tinykeys": "^3.0.0"
+    "tinykeys": "^3.0.0",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@types/howler": "^2.2.12",

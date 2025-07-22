@@ -35,14 +35,14 @@ export default function VideoPopup({ roomName }: { roomName: string }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex items-center justify-center">
-      <div className="w-full h-screen max-w-4xl flex flex-col px-4 py-6 overflow-y-auto">
+      <div className="w-full h-screen max-w-4xl flex flex-col px-4 py-6 overflow-y-auto space-y-8">
         {/* Judul */}
-        <h2 className="text-xl md:text-2xl font-semibold text-center text-red-600 mb-4">
+        <h1 className="text-3xl font-bold text-center text-black">
           Video Penjelasan & Tutorial Ujian
-        </h2>
+        </h1>
 
         {/* Video Player */}
-        <div className="relative mx-auto aspect-video bg-black rounded-lg overflow-hidden">
+        <div className="relative mx-auto aspect-video bg-black rounded-lg overflow-hidden w-full max-w-4xl">
           <ReactPlayer
             ref={playerRef}
             src="/videos/sample-1.mp4"
@@ -63,17 +63,17 @@ export default function VideoPopup({ roomName }: { roomName: string }) {
         </div>
 
         {/* Penjelasan tambahan */}
-        <p className="text-center text-gray-700 text-sm md:text-base mt-6">
+        <p className="text-center text-gray-700 text-sm md:text-base">
           Dengan menekan tombol di bawah, Anda menyatakan telah memahami isi video ini dan siap
           untuk mengikuti ujian. Silakan klik tombol tersebut untuk memulai ujian di platform{' '}
           <strong>ALPHA Exam</strong>.
         </p>
 
         {/* Tombol tutup */}
-        <div className="flex justify-center mt-6">
+        <div className="flex justify-center">
           <button
             onClick={handleClose}
-            className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-md transition"
+            className="cursor-pointer inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-md transition"
           >
             <UserRoundCheck size={20} className="text-white" />
             Saya sudah paham, kembali ke ruang ujian

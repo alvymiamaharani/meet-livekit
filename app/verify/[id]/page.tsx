@@ -1,33 +1,57 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { getTodayString } from '@/lib/utils';
-import FaceEmbedLive from '@/components/proctoring/face-embed'; // real-time face
-import GestureRecognition from '@/components/proctoring/gesture-recognition'; // hand gesture
+import FaceEmbedLive from '@/components/proctoring/face-embed';
+import GestureRecognition from '@/components/proctoring/gesture-recognition';
 import { rtdb } from '@/lib/firebase';
-import { ref, get } from 'firebase/database';
+import { ref, onValue } from 'firebase/database';
+import { useParams, useRouter } from 'next/navigation';
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
+export default function Page() {
+  const params = useParams();
+  const id = String(params.id || '');
+  const today = getTodayString();
+  const router = useRouter();
 
-export default async function Page({ params }: PageProps) {
-  const { id } = await params;
-  const today = getTodayString(); // "2025-07-22"
+  const [faceVerified, setFaceVerified] = useState(false);
+  const [gestureVerified, setGestureVerified] = useState(false);
 
-  // 1️⃣  Read from RTDB
-  const snap = await get(ref(rtdb, `test-monitoring/${today}-${id}/isVerified`));
-  const isVerified = snap.val() === true;
+  // 🔁 Listener for faceVerified
+  useEffect(() => {
+    const faceRef = ref(rtdb, `test-monitoring/${today}-${id}/isVerified`);
+    const unsub = onValue(faceRef, (snap) => {
+      setFaceVerified(snap.val() === true);
+    });
+    return () => unsub();
+  }, [id, today]);
 
-  // 2️⃣  Conditional render
+  // 🔁 Listener for gestureVerified
+  useEffect(() => {
+    const gestureRef = ref(rtdb, `test-monitoring/${today}-${id}/handGesture`);
+    const unsub = onValue(gestureRef, (snap) => {
+      setGestureVerified(snap.val() === true);
+    });
+    return () => unsub();
+  }, [id, today]);
+
+  // ✅ Navigate when both are verified
+  useEffect(() => {
+    if (faceVerified && gestureVerified) {
+      router.push(`/rooms/${id}`);
+    }
+  }, [faceVerified, gestureVerified, id, router]);
+
+  // 👤 Face verification first
   return (
-    <div className="min-h-screen bg-white p-4">
-      <h1 className="py-4 text-3xl font-bold text-center text-red-600 mb-6">
-        {isVerified ? 'Verifikasi Gestur Tangan' : 'Verifikasi Identitas'}
+    <div className="min-h-screen bg-white px-4 py-8 space-y-8">
+      <h1 className="text-3xl font-bold text-center text-black">
+        {faceVerified ? 'Verifikasi Gestur Tangan' : 'Verifikasi Identitas'}
       </h1>
 
-      {isVerified ? (
-        // Hand-gesture stage
+      {faceVerified ? (
         <GestureRecognition roomName={id} today={today} />
       ) : (
-        // Face-verification stage
         <FaceEmbedLive roomName={id} today={today} />
       )}
     </div>

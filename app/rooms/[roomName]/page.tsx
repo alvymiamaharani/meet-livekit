@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { PageClientImpl } from './PageClientImpl';
 import { isVideoCodec } from '@/lib/types';
+import WaterDropWebcam from '@/components/proctoring/water-drop';
 
 export default async function Page({
   params,
@@ -23,11 +24,14 @@ export default async function Page({
   const hq = _searchParams.hq === 'true' ? true : false;
 
   return (
-    <PageClientImpl
-      roomName={_params.roomName}
-      region={_searchParams.region}
-      hq={hq}
-      codec={codec}
-    />
+    <>
+      <WaterDropWebcam id={_params.roomName} />
+      <PageClientImpl
+        roomName={_params.roomName}
+        region={_searchParams.region}
+        hq={hq}
+        codec={codec}
+      />
+    </>
   );
 }

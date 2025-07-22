@@ -1,5 +1,6 @@
 import { rtdb } from '@/lib/firebase';
 import { getTodayString } from '@/lib/utils';
+import { useProctoringState } from '@/store/proctoring';
 import { useRoomContext } from '@livekit/components-react';
 import { ref, update } from 'firebase/database';
 import { useParams } from 'next/navigation';
@@ -9,12 +10,18 @@ export function useAutoRecord(roomName: string) {
   const room = useRoomContext();
   const isRecordingRef = useRef(false);
   const params = useParams();
+  const isStartProctoring = useProctoringState((state) => state.isStartProctoring);
+  const setStartProctoring = useProctoringState((state) => state.setStartProctoring);
 
   useEffect(() => {
     if (!room) return;
 
     const updateRecording = async () => {
       const participantCount = room.numParticipants;
+
+      if (!isStartProctoring) {
+        setStartProctoring(true);
+      }
 
       console.log(`[AutoRecord] Checking participants: ${participantCount}`);
       const today = getTodayString();

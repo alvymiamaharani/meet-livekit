@@ -1,4 +1,3 @@
-// components/gesture-recognition.tsx
 'use client';
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
@@ -24,12 +23,13 @@ const labelAndImages = [
 
 const GestureRecognition: React.FC<Props> = ({ roomName, today }) => {
   const webcamRef = useRef<Webcam>(null);
+  const lastVideoTimeRef = useRef(-1);
   const animationFrameRef = useRef<number | null>(null);
+
   const [recognizer, setRecognizer] = useState<GestureRecognizer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isWebcamRunning, setIsWebcamRunning] = useState(false);
-  const [lastVideoTime, setLastVideoTime] = useState(-1);
 
   const indexQuestionRef = useRef(0);
   const [questions, setQuestions] = useState<typeof labelAndImages>([]);
@@ -37,7 +37,7 @@ const GestureRecognition: React.FC<Props> = ({ roomName, today }) => {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
 
-  /* ---------- Init GestureRecognizer ---------- */
+  // Init recognizer
   useEffect(() => {
     const init = async () => {
       try {
@@ -47,13 +47,11 @@ const GestureRecognition: React.FC<Props> = ({ roomName, today }) => {
         const rec = await GestureRecognizer.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: '/gesture_recognizer.task',
-            delegate: 'GPU',
+            delegate: 'CPU',
           },
           runningMode: 'VIDEO',
         });
         setRecognizer(rec);
-
-        // Pick 5 random gestures
         const shuffled = [...labelAndImages].sort(() => 0.5 - Math.random());
         setQuestions(shuffled.slice(0, 5));
       } catch (e) {
@@ -70,7 +68,7 @@ const GestureRecognition: React.FC<Props> = ({ roomName, today }) => {
     };
   }, []);
 
-  /* ---------- Timer ---------- */
+  // Timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isWebcamRunning && !completed && startTime) {
@@ -82,25 +80,16 @@ const GestureRecognition: React.FC<Props> = ({ roomName, today }) => {
     return () => clearInterval(interval);
   }, [isWebcamRunning, completed, startTime]);
 
-  /* ---------- Format MM:SS ---------- */
-  const formatTime = (sec: number) => {
-    if (!Number.isFinite(sec) || sec < 0) return '00:00';
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
-
-  /* ---------- Predict loop ---------- */
+  // Predict gesture loop
   const predict = useCallback(() => {
     if (!recognizer || !webcamRef.current || !isWebcamRunning || completed) return;
     const video = webcamRef.current.video;
     if (!video) return;
 
     const now = Date.now();
-    if (video.currentTime !== lastVideoTime) {
-      setLastVideoTime(video.currentTime);
+    if (video.currentTime !== lastVideoTimeRef.current) {
+      lastVideoTimeRef.current = video.currentTime;
+
       try {
         const res = recognizer.recognizeForVideo(video, now);
         if (res.gestures.length > 0) {
@@ -115,50 +104,39 @@ const GestureRecognition: React.FC<Props> = ({ roomName, today }) => {
             }
           }
         }
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        console.error(err);
       }
     }
     animationFrameRef.current = requestAnimationFrame(predict);
-  }, [recognizer, isWebcamRunning, completed, lastVideoTime, questions]);
+  }, [recognizer, isWebcamRunning, completed, questions]);
 
   useEffect(() => {
-    if (isWebcamRunning && !completed) predict();
-    else if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (isWebcamRunning && !completed) {
+      animationFrameRef.current = requestAnimationFrame(predict);
+    } else if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
   }, [isWebcamRunning, completed, predict]);
 
-  /* ---------- Toggle webcam ---------- */
-  const toggleWebcam = () => {
-    if (!recognizer) {
-      toast.warn('Model belum siap');
-      return;
-    }
-    if (isWebcamRunning) {
-      setIsWebcamRunning(false);
-      setStartTime(null);
-      setCurrentTime(0);
-    } else {
-      setIsWebcamRunning(true);
-      setStartTime(Date.now());
-      setCurrentTime(0);
-    }
-  };
+  // Auto start webcam after 3s
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (recognizer && !isWebcamRunning) {
+        setIsWebcamRunning(true);
+        setStartTime(Date.now());
+        setCurrentTime(0);
+      }
+    }, 3000);
 
-  /* ---------- Restart quiz ---------- */
-  const restart = () => {
-    setIsWebcamRunning(false);
-    setCompleted(false);
-    setStartTime(null);
-    setCurrentTime(0);
-    indexQuestionRef.current = 0;
-    const shuffled = [...labelAndImages].sort(() => 0.5 - Math.random());
-    setQuestions(shuffled.slice(0, 5));
-  };
+    return () => clearTimeout(timeout);
+  }, [recognizer]);
 
-  /* ---------- Write RTDB on completion ---------- */
+  // Write to RTDB
   useEffect(() => {
     if (completed) {
       update(ref(rtdb, `test-monitoring/${today}-${roomName}`), {
@@ -167,7 +145,7 @@ const GestureRecognition: React.FC<Props> = ({ roomName, today }) => {
     }
   }, [completed, roomName, today]);
 
-  /* ---------- Render ---------- */
+  // UI loading or error
   if (isLoading)
     return (
       <div className="flex justify-center items-center h-64">
@@ -183,88 +161,44 @@ const GestureRecognition: React.FC<Props> = ({ roomName, today }) => {
     );
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="min-h-screen bg-white px-4 py-8">
+      <div className="flex flex-col justify-center items-center gap-4">
         {/* Webcam */}
-        <div className="card shadow-md border border-red-200">
-          <div className="card-body p-4">
-            <h2 className="card-title text-red-700 text-sm">Kamera</h2>
-            <Webcam
-              mirrored
-              audio={false}
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              className="rounded w-full aspect-video object-cover"
-            />
-            {completed ? (
-              <button
-                onClick={restart}
-                className="btn btn-primary bg-red-600 border-red-600 w-full mt-2"
-              >
-                Mulai Ulang
-              </button>
-            ) : (
-              <button
-                disabled={isWebcamRunning}
-                onClick={toggleWebcam}
-                className={`btn w-full mt-2 ${isWebcamRunning ? 'btn-disabled text-gray-600' : 'btn-success text-white bg-red-600 border-red-600 hover:bg-red-700'}`}
-              >
-                {isWebcamRunning ? 'Sedang Berlangsung...' : 'Mulai Verifikasi'}
-              </button>
-            )}
-          </div>
+        <div className="relative w-full max-w-2xl aspect-[16/10] bg-gray-100 border-[3px] rounded-xl overflow-hidden shadow-lg">
+          <Webcam
+            mirrored
+            ref={webcamRef}
+            audio={false}
+            screenshotFormat="image/jpeg"
+            videoConstraints={{ facingMode: 'user' }}
+            className="w-full h-full object-cover"
+          />
+          {/* Gesture image top-left */}
+          {isWebcamRunning && !completed && (
+            <div className="absolute top-4 left-4 w-20 h-20 border border-gray-300 bg-white rounded shadow flex items-center justify-center">
+              <img
+                src={questions[indexQuestionRef.current]?.image}
+                alt="gesture"
+                className="w-full h-full object-contain p-1"
+              />
+            </div>
+          )}
         </div>
 
-        {/* Instructions / Progress */}
-        <div className="card shadow-md border border-red-200">
-          <div className="card-body p-4">
-            {(isWebcamRunning || completed) && (
-              <div className="mb-4">
-                <div className="stats shadow w-full">
-                  <div className="stat">
-                    <div className="stat-title text-red-600">Waktu</div>
-                    <div className="stat-value text-red-600 text-2xl">
-                      {formatTime(currentTime)}
-                    </div>
-                    <div className="stat-desc">{completed ? 'Selesai' : 'Berlangsung'}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {isWebcamRunning && !completed && (
-              <div className="text-center">
-                <p className="text-lg font-semibold text-red-600 mb-2">
-                  Buat gestur seperti ini ({indexQuestionRef.current + 1}/{questions.length}):
-                </p>
-                <img
-                  src={questions[indexQuestionRef.current]?.image}
-                  alt="gesture"
-                  className="w-32 h-32 mx-auto mb-2"
-                />
-                <span className="badge badge-lg badge-primary">
-                  {questions[indexQuestionRef.current]?.name}
-                </span>
-              </div>
-            )}
-
-            {completed && (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-                <span>Semua gestur berhasil! Verifikasi selesai.</span>
-              </div>
-            )}
-
-            {!isWebcamRunning && !completed && (
-              <div className="text-center py-6">
-                <h3 className="text-lg font-semibold mt-2 text-red-700">Instruksi</h3>
-                <p className="text-sm mt-1 text-gray-600">
-                  Klik “Mulai Verifikasi”
-                  <br />
-                  lalu ikuti 5 gestur tangan yang muncul secara acak.
-                </p>
-              </div>
-            )}
-          </div>
+        {/* Instruction below webcam */}
+        <div className="mt-4 text-center">
+          {completed ? (
+            <div className="text-green-700 font-semibold bg-green-100 border border-green-400 rounded px-4 py-2 inline-block">
+              Semua gestur berhasil dikenali! Verifikasi selesai.
+            </div>
+          ) : isWebcamRunning ? (
+            <p className="text-sm text-red-700 font-medium">
+              <strong>Instruksi:</strong> Ikuti gesture di kiri atas video webcam untuk proses
+              verifikasi.
+            </p>
+          ) : (
+            <p className="text-sm text-gray-500 italic">Menyiapkan verifikasi gestur tangan...</p>
+          )}
         </div>
       </div>
     </div>

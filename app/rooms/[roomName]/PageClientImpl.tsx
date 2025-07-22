@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { decodePassphrase, isLowPowerDevice } from '@/lib/client-utils';
 import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { RecordingIndicator } from '@/lib/RecordingIndicator';
@@ -29,6 +29,7 @@ import { useRouter } from 'next/navigation';
 import { useSetupE2EE } from '@/lib/useSetupE2EE';
 import { useAutoRecord } from '@/hooks/autorecord';
 import VideoPopup from '@/components/VideoPopup';
+import { useProctoringState } from '@/store/proctoring';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details';
@@ -40,6 +41,7 @@ export function PageClientImpl(props: {
   hq: boolean;
   codec: VideoCodec;
 }) {
+  const setStartProctoring = useProctoringState((state) => state.setStartProctoring);
   const [preJoinChoices, setPreJoinChoices] = React.useState<LocalUserChoices | undefined>(
     undefined,
   );
@@ -67,6 +69,12 @@ export function PageClientImpl(props: {
     setConnectionDetails(connectionDetailsData);
   }, []);
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
+
+  useEffect(() => {
+    if (connectionDetails === undefined || preJoinChoices === undefined) {
+      setStartProctoring(false);
+    }
+  }, [connectionDetails, preJoinChoices]);
 
   return (
     <main data-lk-theme="default" className="lk-theme-lights" style={{ height: '100%' }}>

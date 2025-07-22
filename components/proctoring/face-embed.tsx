@@ -1,4 +1,3 @@
-// components/face-embed-live.tsx
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
@@ -12,11 +11,11 @@ import { db, rtdb } from '@/lib/firebase';
 
 interface Props {
   roomName: string;
-  today: string; // YYYY-MM-DD
+  today: string;
 }
 
-const THRESHOLD = 0.4; //  40%
-const HOLD_DURATION = 1500; // ms
+const THRESHOLD = 0.4;
+const HOLD_DURATION = 1500;
 
 export default function FaceEmbedLive({ roomName, today }: Props) {
   const webcamRef = useRef<Webcam>(null);
@@ -28,11 +27,9 @@ export default function FaceEmbedLive({ roomName, today }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  // ★ NEW: Cloudinary env
   const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!;
   const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!;
 
-  // ★ NEW: small helpers
   const dataURLtoFile = (dataUrl: string, filename: string): File => {
     const arr = dataUrl.split(',');
     const mime = arr[0].match(/:(.*?);/)![1];
@@ -57,10 +54,7 @@ export default function FaceEmbedLive({ roomName, today }: Props) {
     return json.secure_url as string;
   };
 
-  // Timer untuk "hold"
   const holdTimer = useRef<NodeJS.Timeout | null>(null);
-
-  /* ---------- init MediaPipe ---------- */
   useEffect(() => {
     (async () => {
       try {
@@ -89,7 +83,6 @@ export default function FaceEmbedLive({ roomName, today }: Props) {
     })();
   }, []);
 
-  /* ---------- ambil foto referensi ---------- */
   useEffect(() => {
     if (!detector || !embedder) return;
     (async () => {
@@ -126,7 +119,6 @@ export default function FaceEmbedLive({ roomName, today }: Props) {
     })();
   }, [roomName, detector, embedder]);
 
-  /* ---------- loop real-time ---------- */
   useEffect(() => {
     if (!detector || !embedder || !refEmbed || done) return;
 
@@ -140,7 +132,7 @@ export default function FaceEmbedLive({ roomName, today }: Props) {
       try {
         const img = await toImg(src);
         const dets = detector.detect(img).detections;
-        if (!dets?.length) return; // skip frame
+        if (!dets?.length) return;
 
         const best = dets.reduce((a, b) => (b.categories[0].score > a.categories[0].score ? b : a));
         if (!best.boundingBox) throw new Error('Bounding box tidak ditemukan');
@@ -163,7 +155,7 @@ export default function FaceEmbedLive({ roomName, today }: Props) {
                 isVerified: true,
                 newPhotoUrl: url,
               });
-              toast.success('Verifikasi berhasil!');
+              toast.success('Verifikasi wajah berhasil!');
               setDone(true);
             }, HOLD_DURATION);
           }
@@ -200,44 +192,55 @@ export default function FaceEmbedLive({ roomName, today }: Props) {
     );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-      {/* Referensi */}
-      <div className="card shadow-md border border-red-200">
-        <div className="card-body p-4">
-          <h2 className="card-title text-red-700 text-sm">Foto Referensi</h2>
-          {refImg ? (
-            <img src={refImg} className="rounded w-full aspect-square object-cover" />
-          ) : (
-            <div className="w-full aspect-square bg-gray-100 rounded flex items-center justify-center">
-              <span className="loading loading-spinner text-red-600" />
+    <div className="bg-white flex flex-col items-center justify-center">
+      {/* Webcam container dengan posisi relatif */}
+      <div className="relative w-full max-w-2xl aspect-[16/10] bg-gray-100 border-[3px] rounded-xl overflow-hidden shadow-lg">
+        {/* Webcam Live Feed */}
+        <Webcam
+          mirrored
+          audio={false}
+          ref={webcamRef}
+          screenshotFormat="image/jpeg"
+          videoConstraints={{ facingMode: 'user' }}
+          className="w-full h-full object-cover"
+        />
+
+        {/* Foto referensi melayang di dalam webcam */}
+        <div className="absolute top-4 left-4 z-10">
+          {/* Foto Referensi Box */}
+          <div className="w-24 h-24 border-[3px] border-gray-100 rounded-lg shadow-md overflow-hidden">
+            {refImg ? (
+              <img src={refImg} alt="Referensi" className="w-full h-full object-cover" />
+            ) : (
+              <span className="loading loading-spinner text-red-600 flex items-center justify-center w-full h-full" />
+            )}
+          </div>
+
+          {/* Label di bawah foto, tidak overlap */}
+          <div className="mt-1 bg-gray-100 text-black text-[10px] font-semibold px-1.5 py-0.5 rounded w-full text-center shadow-sm">
+            Foto Referensi
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full max-w-2xl pt-4">
+        {done ? (
+          <div className="text-green-700 font-semibold bg-green-100 border border-green-400 rounded px-4 py-2 inline-block">
+            Verifikasi wajah berhasil
+          </div>
+        ) : (
+          <>
+            <p className="text-sm font-semibold text-start text-red-800 mb-2 uppercase tracking-wide">
+              {`Tingkat Kemiripan : ${Math.round(similarity * 100)}%`}
+            </p>
+            <div className="w-full h-3 bg-neutral-200 rounded overflow-hidden">
+              <div
+                className="h-full bg-red-600 transition-all duration-300 ease-in-out"
+                style={{ width: `${Math.round(similarity * 100)}%` }}
+              />
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Progress */}
-      <div className="flex flex-col items-center pt-10">
-        <p className="text-sm font-semibold text-red-700 mb-2">Tingkat Kemiripan</p>
-        <div
-          className="radial-progress bg-red-100 text-red-700 "
-          style={{ '--value': Math.round(similarity * 100) } as any}
-        >
-          {Math.round(similarity * 100)}%
-        </div>
-        {done && <p className="text-center text-green-600 mt-2">Terverifikasi</p>}
-      </div>
-
-      {/* Camera feed */}
-      <div className="card shadow-md border border-red-200">
-        <div className="card-body p-4">
-          <h2 className="card-title text-red-700 text-sm">Kamera</h2>
-          <Webcam
-            audio={false}
-            ref={webcamRef}
-            screenshotFormat="image/jpeg"
-            className="rounded w-full aspect-square object-cover"
-          />
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
