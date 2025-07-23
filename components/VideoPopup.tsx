@@ -42,7 +42,7 @@ export default function VideoPopup({ roomName }: { roomName: string }) {
         </h1>
 
         {/* Video Player */}
-        <div className="relative mx-auto aspect-video bg-black rounded-lg overflow-hidden w-full max-w-4xl">
+        <div className="relative mx-auto aspect-video-16-9 bg-black rounded-lg overflow-hidden w-full max-w-4xl">
           <ReactPlayer
             ref={playerRef}
             src="/videos/sample-1.mp4"

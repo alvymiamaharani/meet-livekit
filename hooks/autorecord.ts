@@ -12,6 +12,7 @@ export function useAutoRecord(roomName: string) {
   const params = useParams();
   const isStartProctoring = useProctoringState((state) => state.isStartProctoring);
   const setStartProctoring = useProctoringState((state) => state.setStartProctoring);
+  const retryTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (!room) return;
@@ -28,19 +29,28 @@ export function useAutoRecord(roomName: string) {
       const roomName = params?.roomName || '';
 
       if (participantCount > 0 && !isRecordingRef.current) {
-        try {
-          await fetch(`/api/record/start?roomName=${roomName}`);
-          isRecordingRef.current = true;
+        const startWithRetry = async (attempt = 0) => {
+          try {
+            await fetch(`/api/record/start?roomName=${roomName}`);
+            isRecordingRef.current = true;
 
-          const path = `test-monitoring/${today}-${roomName}`;
-          update(ref(rtdb, path), {
-            isJoined: true,
-          });
+            const path = `test-monitoring/${today}-${roomName}`;
+            update(ref(rtdb, path), {
+              isJoined: true,
+            });
 
-          console.log('[AutoRecord] Recording started');
-        } catch (err) {
-          console.error('[AutoRecord] Failed to start recording:', err);
-        }
+            console.log('[AutoRecord] Recording started');
+          } catch (err) {
+            console.error(`[AutoRecord] Failed to start recording (attempt ${attempt + 1}):`, err);
+
+            // Retry setelah 2 detik, maksimal 5 kali
+            if (attempt < 4) {
+              retryTimeoutRef.current = setTimeout(() => startWithRetry(attempt + 1), 2000);
+            }
+          }
+        };
+
+        startWithRetry();
       }
 
       if (participantCount === 0 && isRecordingRef.current) {
@@ -77,6 +87,9 @@ export function useAutoRecord(roomName: string) {
     return () => {
       room.off('participantConnected', updateRecording);
       room.off('participantDisconnected', updateRecording);
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
     };
   }, [room, roomName]);
 }
