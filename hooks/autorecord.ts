@@ -18,7 +18,8 @@ export function useAutoRecord(roomName: string) {
     if (!room) return;
 
     const updateRecording = async () => {
-      const participantCount = room.numParticipants;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const participantCount = room.remoteParticipants.size + (room.localParticipant ? 1 : 0);
 
       if (!isStartProctoring) {
         setStartProctoring(true);
@@ -31,11 +32,36 @@ export function useAutoRecord(roomName: string) {
       if (participantCount > 0 && !isRecordingRef.current) {
         const startWithRetry = async (attempt = 0) => {
           try {
-            await fetch(`/api/record/start?roomName=${roomName}`);
+            const response = await fetch(`/api/record/start?roomName=${roomName}`);
+            if (!response.ok && response.status !== 204 && response.status !== 409) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Handle 409 (recording already active) as success
+            if (response.status === 409) {
+              console.log('[AutoRecord] Recording already active, no retry needed');
+              isRecordingRef.current = true;
+
+              const path = `test-monitoring/${today}-${roomName}`;
+              await update(ref(rtdb, path), {
+                isJoined: true,
+              });
+
+              return; // Exit without retrying
+            }
+
+            // Only parse JSON if the response has a body (not 204)
+            let data;
+            if (response.status !== 204) {
+              console.log('[AutoRecord] Start recording response:', response);
+            } else {
+              console.log('[AutoRecord] Start recording response: 204 No Content');
+            }
+
             isRecordingRef.current = true;
 
             const path = `test-monitoring/${today}-${roomName}`;
-            update(ref(rtdb, path), {
+            await update(ref(rtdb, path), {
               isJoined: true,
             });
 
@@ -43,9 +69,11 @@ export function useAutoRecord(roomName: string) {
           } catch (err) {
             console.error(`[AutoRecord] Failed to start recording (attempt ${attempt + 1}):`, err);
 
-            // Retry setelah 2 detik, maksimal 5 kali
+            // Retry after 2 seconds, up to 5 attempts
             if (attempt < 4) {
               retryTimeoutRef.current = setTimeout(() => startWithRetry(attempt + 1), 2000);
+            } else {
+              console.error('[AutoRecord] Max retry attempts reached');
             }
           }
         };
@@ -55,7 +83,10 @@ export function useAutoRecord(roomName: string) {
 
       if (participantCount === 0 && isRecordingRef.current) {
         try {
-          await fetch(`/api/record/stop?roomName=${roomName}`);
+          const response = await fetch(`/api/record/stop?roomName=${roomName}`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
           isRecordingRef.current = false;
           console.log('[AutoRecord] Recording stopped');
         } catch (err) {
@@ -64,15 +95,15 @@ export function useAutoRecord(roomName: string) {
       }
     };
 
-    const tryInitialUpdate = () => {
+    const tryInitialUpdate = async () => {
       if (room.state === 'connected') {
         console.log('[AutoRecord] Room already connected, checking recording...');
-        updateRecording();
+        await updateRecording();
       } else {
         console.log('[AutoRecord] Waiting for room connection...');
-        const handleConnected = () => {
+        const handleConnected = async () => {
           console.log('[AutoRecord] Room connected, checking recording...');
-          updateRecording();
+          await updateRecording();
           room.off('connected', handleConnected);
         };
         room.on('connected', handleConnected);
@@ -91,5 +122,5 @@ export function useAutoRecord(roomName: string) {
         clearTimeout(retryTimeoutRef.current);
       }
     };
-  }, [room, roomName]);
+  }, [room, roomName, isStartProctoring, setStartProctoring, params]);
 }
